@@ -8,7 +8,6 @@ from PyPDF2 import PdfWriter, PdfReader
 from pathlib import Path
 
 config = yaml.safe_load(open("config.yaml"))
-Path(config["preprocess_folder"]).mkdir(parents=True, exist_ok=True)
 
 def preprocess_pdf(file_path):
     reader = PdfReader(file_path)
@@ -30,15 +29,28 @@ class pdf_handler(PatternMatchingEventHandler):
         with open(filepath, 'wb') as f:
             reducted_pdf.write(f)  
 
+def check_new_pdfs(workload_folder, preprocess_folder):
+    for file in Path(workload_folder).glob('*.pdf'):
+        if not (Path(preprocess_folder) / ('preprocessed_' + file.name)).exists():
+            reducted_pdf = preprocess_pdf(file)
+            filepath = Path(preprocess_folder) / ('preprocessed_' + file.name)
+            with open(filepath, 'wb') as f:
+                reducted_pdf.write(f)
+
 
 if __name__ == "__main__":
     logging.basicConfig(filename='monitor.log', level=logging.INFO)
-    path = config["workload_folder"]
+    workload_folder = config["workload_folder"]
+    preprocess_folder = config["preprocess_folder"]
+    Path(config["preprocess_folder"]).mkdir(parents=True, exist_ok=True)
+
+    check_new_pdfs(workload_folder, preprocess_folder)
+
     logging_handler = LoggingEventHandler()
     pdf_handler = pdf_handler(config=config)
     observer = Observer()
-    observer.schedule(logging_handler, path, recursive=True)
-    observer.schedule(pdf_handler, path, recursive=False)
+    observer.schedule(logging_handler, workload_folder, recursive=True)
+    observer.schedule(pdf_handler, workload_folder, recursive=False)
     observer.start()
     try:
         while True:
