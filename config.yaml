@@ -1,2 +1,3 @@
 workload_folder: '/Users/monitor_test_folder'
 preprocess_folder: '/Users/monitor_test_folder/preprocess'
+final_folder: '/Users/monitor_test_folder/final'
